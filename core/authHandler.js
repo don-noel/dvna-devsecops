@@ -1,5 +1,5 @@
 var db = require('../models')
-var bCrypt = require('bcrypt')
+var bCrypt = require('bcryptjs')
 var md5 = require('md5')
 
 module.exports.isAuthenticated = function (req, res, next) {
