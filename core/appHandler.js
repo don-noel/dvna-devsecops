@@ -1,5 +1,5 @@
 var db = require('../models')
-var bCrypt = require('bcrypt')
+var bCrypt = require('bcryptjs')
 const exec = require('child_process').exec;
 var mathjs = require('mathjs')
 var libxmljs = require("libxmljs");
