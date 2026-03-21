@@ -6,6 +6,6 @@ LABEL MAINTAINER "Subash SN"
 
 WORKDIR /app
 
-RUN npm install -g nodemon
+RUN npm install -g nodemon@1.19.4
 
 CMD ["/bin/bash", "/app/entrypoint-dev.sh"]
