@@ -1,3 +1,6 @@
-dependency-check-report.html
-*.html
-*.json
+dependency-check-report.xml:aws-access-token:50764
+dependency-check-report.xml:aws-access-token:50771
+dependency-check-report.xml:aws-access-token:50772
+dependency-check-report.html:aws-access-token:1640
+dependency-check-report.html:aws-access-token:1647
+dependency-check-report.html:aws-access-token:1648
