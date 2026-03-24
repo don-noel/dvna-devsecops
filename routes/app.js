@@ -2,7 +2,7 @@ var router = require('express').Router()
 var appHandler = require('../core/appHandler')
 var authHandler = require('../core/authHandler')
 
-module.exports = function () {
+module.exports = function appRoutes() {
     router.get('/', authHandler.isAuthenticated, function (req, res) {
         res.redirect('/learn')
     })
