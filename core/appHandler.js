@@ -55,7 +55,7 @@ const db = require('../models');
 const bCrypt = require('bcryptjs');
 const { execFile } = require('node:child_process');
 const mathjs = require('mathjs');
-const libxmljs = require('libxmljs');
+const xml2js = require('xml2js');
 // ERREUR D’ORIGINE : node-serialize était utilisé pour désérialiser des données
 // utilisateur. C’est dangereux côté SAST et sécurité.
 // const serialize = require("node-serialize")
@@ -438,33 +438,40 @@ module.exports.bulkProductsLegacy = function (req, res) {
 
 module.exports.bulkProducts = function (req, res) {
 	if (req.files?.products?.mimetype === 'text/xml') {
-		try {
-			// NOTE :
-			// le code d’origine avait déjà remplacé l’option dangereuse noent: true
-			// par noblanks: true, ce qui évite le problème XXE déjà corrigé.
-			const products = libxmljs.parseXmlString(
-				req.files.products.data.toString('utf8'),
-				{ noblanks: true }
-			);
+		const parser = new xml2js.Parser({ trim: true });
 
-			products.root().childNodes().forEach(product => {
-				const newProduct = new db.Product();
-				const childNodes = product.childNodes();
+		parser.parseString(req.files.products.data.toString('utf8'), async (err, result) => {
+			if (err) {
+				return res.render('app/bulkproducts', {
+					messages: { danger: 'Invalid XML file' },
+					legacy: false
+				});
+			}
 
-				newProduct.name = childNodes[0]?.text() || '';
-				newProduct.code = childNodes[1]?.text() || '';
-				newProduct.tags = childNodes[2]?.text() || '';
-				newProduct.description = childNodes[3]?.text() || '';
-				newProduct.save();
-			});
+			try {
+				const products = result?.products?.product || [];
 
-			return res.redirect('/app/products');
-		} catch {
-			return res.render('app/bulkproducts', {
-				messages: { danger: 'Invalid XML file' },
-				legacy: false
-			});
-		}
+				for (const product of products) {
+					const newProduct = new db.Product();
+
+					newProduct.name = product.name?.[0] || '';
+					newProduct.code = product.code?.[0] || '';
+					newProduct.tags = product.tags?.[0] || '';
+					newProduct.description = product.description?.[0] || '';
+
+					await newProduct.save();
+				}
+
+				return res.redirect('/app/products');
+			} catch {
+				return res.render('app/bulkproducts', {
+					messages: { danger: 'Invalid XML file' },
+					legacy: false
+				});
+			}
+		});
+
+		return;
 	}
 
 	return res.render('app/bulkproducts', {
