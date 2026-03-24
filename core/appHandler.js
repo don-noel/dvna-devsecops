@@ -437,7 +437,7 @@ module.exports.bulkProductsLegacy = function (req, res) {
 };
 
 module.exports.bulkProducts = function (req, res) {
-	if (req.files.products && req.files.products.mimetype === 'text/xml') {
+	if (req.files?.products?.mimetype === 'text/xml') {
 		try {
 			// NOTE :
 			// le code d’origine avait déjà remplacé l’option dangereuse noent: true
