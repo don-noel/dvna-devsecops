@@ -1,20 +1,44 @@
-var db = require('../models')
-var bCrypt = require('bcryptjs')
-var md5 = require('md5')
+/**
+ * ============================================================================
+ * FICHIER : core/authHandler.js
+ * OBJECTIF : Correction SAST - suppression des usages de "var"
+ * ============================================================================
+ *
+ * ERREUR CORRIGÉE :
+ * ----------------
+ * var utilisé pour importer des modules
+ *
+ * POURQUOI C’EST UNE ERREUR :
+ * - portée imprécise
+ * - peut être redéfini
+ * - SonarQube le signale comme mauvaise pratique (HIGH)
+ *
+ * CORRECTION :
+ * - remplacement par const
+ *
+ * CE QUE ÇA RÉSOUT :
+ * - suppression des HIGH issues
+ * - meilleure sécurité et lisibilité
+ */
+
+const db = require('../models');
+const bCrypt = require('bcryptjs');
+const md5 = require('md5');
 
 module.exports.isAuthenticated = function (req, res, next) {
 	if (req.isAuthenticated()) {
-		req.flash('authenticated', true)
+		req.flash('authenticated', true);
 		return next();
 	}
 	res.redirect('/login');
-}
+};
 
 module.exports.isNotAuthenticated = function (req, res, next) {
-	if (!req.isAuthenticated())
+	if (!req.isAuthenticated()) {
 		return next();
+	}
 	res.redirect('/learn');
-}
+};
 
 module.exports.forgotPw = function (req, res) {
 	if (req.body.login) {
