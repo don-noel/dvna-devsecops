@@ -89,6 +89,8 @@ async function initializeDatabase() {
 	}
 }
 
-initializeDatabase().catch((err) => {
+try {
+  await initializeDatabase();
+} catch (err) {
   console.error('Database init failed:', err);
-});
+}
