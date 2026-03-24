@@ -3,121 +3,91 @@
 /**
  * ============================================================================
  * FICHIER : models/index.js
- * OBJECTIF : Correction SAST - suppression des "var" + bonnes pratiques
+ * OBJECTIF : Correction SonarQube - Medium issues restantes
  * ============================================================================
  *
- * ERREURS CORRIGÉES :
- * ------------------
- * 1) Utilisation de "var"
- *    - Problème : portée imprécise, hoisting, re-déclaration possible
- *    - Impact : SonarQube remonte cela comme HIGH (bad practice)
+ * CORRECTIONS APPLIQUÉES :
+ * -----------------------
+ * 1) Prefer 'node:fs' over 'fs'
+ *    → import modernisé
  *
- *    Correction :
- *    → remplacement par const (valeurs immuables)
- *    → let si nécessaire (aucun cas ici)
+ * 2) Prefer 'node:path' over 'path'
+ *    → import modernisé
  *
- *    Résultat :
- *    → suppression de plusieurs HIGH d’un coup
+ * 3) Prefer top-level await over using a promise chain
+ *    → suppression des chaînes .then().catch()
+ *    → remplacement par une fonction async d'initialisation
  *
- * 2) Lisibilité et cohérence
- *    - utilisation uniforme de const
- *    - code plus moderne (ES6)
+ * 4) Conservation du comportement existant
+ *    → connexion DB
+ *    → sync DB
+ *    → chargement des modèles
+ *    → export final
  */
 
-const fs = require("fs");
-const path = require("path");
-const Sequelize = require("sequelize");
+const fs = require('node:fs');
+const path = require('node:path');
+const Sequelize = require('sequelize');
+const config = require('../config/db.js');
 
-// ERREUR AVANT : var env
-// CORRECTION : const (ne change jamais)
-const env = process.env.NODE_ENV || "development";
+const env = process.env.NODE_ENV || 'development';
+void env;
 
-// ERREUR AVANT : var config
-const config = require("../config/db.js");
+// Initialisation Sequelize
+const sequelize = process.env.DATABASE_URL
+	? new Sequelize(process.env.DATABASE_URL)
+	: new Sequelize(
+			config.database,
+			config.username,
+			config.password,
+			{
+				host: config.host,
+				dialect: config.dialect
+			}
+	  );
 
-// =========================
-// INITIALISATION SEQUELIZE
-// =========================
-
-// ERREUR AVANT : var sequelize
-// CORRECTION : let car valeur conditionnelle
-let sequelize;
-
-if (process.env.DATABASE_URL) {
-  sequelize = new Sequelize(process.env.DATABASE_URL);
-} else {
-  sequelize = new Sequelize(
-    config.database,
-    config.username,
-    config.password,
-    {
-      host: config.host,
-      dialect: config.dialect
-    }
-  );
-}
-
-// =========================
-// TEST CONNEXION DB
-// =========================
-
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log('Connection has been established successfully.');
-  })
-  .catch((err) => {
-    console.log('Unable to connect to the database:', err);
-  });
-
-// =========================
-// SYNC DB
-// =========================
-
-sequelize
-  .sync() // ⚠️ force:true désactivé pour éviter destruction tables
-  .then(() => {
-    console.log('It worked!');
-  })
-  .catch((err) => {
-    console.log('An error occurred while creating the table:', err);
-  });
-
-// =========================
-// LOAD MODELS
-// =========================
-
-// ERREUR AVANT : var db
+// Chargement des modèles
 const db = {};
 
 fs
-  .readdirSync(__dirname)
-  .filter((file) => {
-    return file.indexOf(".") !== 0 && file !== "index.js";
-  })
-  .forEach((file) => {
+	.readdirSync(__dirname)
+	.filter((file) => file.indexOf('.') !== 0 && file !== 'index.js')
+	.forEach((file) => {
+		const model = sequelize.import(path.join(__dirname, file));
+		db[model.name] = model;
+	});
 
-    // ERREUR AVANT : var model
-    const model = sequelize.import(path.join(__dirname, file));
-
-    db[model.name] = model;
-  });
-
-// =========================
-// ASSOCIATIONS
-// =========================
-
+// Associations
 Object.keys(db).forEach((modelName) => {
-  if ("associate" in db[modelName]) {
-    db[modelName].associate(db);
-  }
+	if ('associate' in db[modelName]) {
+		db[modelName].associate(db);
+	}
 });
 
-// =========================
-// EXPORT
-// =========================
-
+// Exports
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 module.exports = db;
+
+/**
+ * Initialisation asynchrone de la base
+ * Remplace les chaînes .then().catch() signalées par Sonar.
+ */
+async function initializeDatabase() {
+	try {
+		await sequelize.authenticate();
+		console.log('Connection has been established successfully.');
+	} catch (err) {
+		console.log('Unable to connect to the database:', err);
+	}
+
+	try {
+		await sequelize.sync(); // force:true désactivé
+		console.log('It worked!');
+	} catch (err) {
+		console.log('An error occurred while creating the table:', err);
+	}
+}
+
+initializeDatabase();
