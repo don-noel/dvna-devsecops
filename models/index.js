@@ -31,7 +31,6 @@ const Sequelize = require('sequelize');
 const config = require('../config/db.js');
 
 const env = process.env.NODE_ENV || 'development';
-void env;
 
 // Initialisation Sequelize
 const sequelize = process.env.DATABASE_URL
