@@ -1,6 +1,6 @@
-var router = require('express').Router()
-var vulnDict = require('../config/vulns')
-var authHandler = require('../core/authHandler')
+const router = require('express').Router()
+const vulnDict = require('../config/vulns')
+const authHandler = require('../core/authHandler')
 
 module.exports = function mainRoutes(passport) {
 	router.get('/', authHandler.isAuthenticated, function (req, res) {
