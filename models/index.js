@@ -90,4 +90,6 @@ async function initializeDatabase() {
 	}
 }
 
-initializeDatabase();
+(async () => {
+  await initializeDatabase();
+})();
