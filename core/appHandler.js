@@ -53,7 +53,7 @@
 
 const db = require('../models');
 const bCrypt = require('bcryptjs');
-const { execFile } = require('child_process');
+const { execFile } = require('node:child_process');
 const mathjs = require('mathjs');
 const libxmljs = require('libxmljs');
 // ERREUR D’ORIGINE : node-serialize était utilisé pour désérialiser des données
@@ -71,14 +71,10 @@ function isValidHost(value) {
 	}
 
 	const trimmed = value.trim();
+	const hostnameRegex = /^(?=.{1,253}$)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$/;
+	const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
 
-	// Autorise :
-	// - IPv4 simple
-	// - hostname / domaine simple
-	// Refuse :
-	// - caractères shell suspects ; & | $ ` > < etc.
-	const hostRegex = /^(?=.{1,253}$)([a-zA-Z0-9-]+\.)*[a-zA-Z0-9-]+$|^(\d{1,3}\.){3}\d{1,3}$/;
-	return hostRegex.test(trimmed);
+	return hostnameRegex.test(trimmed) || ipv4Regex.test(trimmed);
 }
 
 /**
@@ -398,7 +394,7 @@ module.exports.calc = function (req, res) {
 		return res.render('app/calc', {
 			output: result
 		});
-	} catch (e) {
+	} catch {
 		return res.render('app/calc', {
 			output: 'Enter a valid math string like (3+3)*2'
 		});
@@ -453,15 +449,17 @@ module.exports.bulkProducts = function (req, res) {
 
 			products.root().childNodes().forEach(product => {
 				const newProduct = new db.Product();
-				newProduct.name = product.childNodes()[0] ? product.childNodes()[0].text() : '';
-				newProduct.code = product.childNodes()[1] ? product.childNodes()[1].text() : '';
-				newProduct.tags = product.childNodes()[2] ? product.childNodes()[2].text() : '';
-				newProduct.description = product.childNodes()[3] ? product.childNodes()[3].text() : '';
+				const childNodes = product.childNodes();
+
+				newProduct.name = childNodes[0]?.text() || '';
+				newProduct.code = childNodes[1]?.text() || '';
+				newProduct.tags = childNodes[2]?.text() || '';
+				newProduct.description = childNodes[3]?.text() || '';
 				newProduct.save();
 			});
 
 			return res.redirect('/app/products');
-		} catch (e) {
+		} catch {
 			return res.render('app/bulkproducts', {
 				messages: { danger: 'Invalid XML file' },
 				legacy: false
