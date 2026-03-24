@@ -1,54 +1,121 @@
-"use strict";
+'use strict';
 
-var fs = require("fs");
-var path = require("path");
-var Sequelize = require("sequelize");
-var env = process.env.NODE_ENV || "development";
-var config = require("../config/db.js")
+/**
+ * ============================================================================
+ * FICHIER : models/index.js
+ * OBJECTIF : Correction SAST - suppression des "var" + bonnes pratiques
+ * ============================================================================
+ *
+ * ERREURS CORRIGÉES :
+ * ------------------
+ * 1) Utilisation de "var"
+ *    - Problème : portée imprécise, hoisting, re-déclaration possible
+ *    - Impact : SonarQube remonte cela comme HIGH (bad practice)
+ *
+ *    Correction :
+ *    → remplacement par const (valeurs immuables)
+ *    → let si nécessaire (aucun cas ici)
+ *
+ *    Résultat :
+ *    → suppression de plusieurs HIGH d’un coup
+ *
+ * 2) Lisibilité et cohérence
+ *    - utilisation uniforme de const
+ *    - code plus moderne (ES6)
+ */
+
+const fs = require("fs");
+const path = require("path");
+const Sequelize = require("sequelize");
+
+// ERREUR AVANT : var env
+// CORRECTION : const (ne change jamais)
+const env = process.env.NODE_ENV || "development";
+
+// ERREUR AVANT : var config
+const config = require("../config/db.js");
+
+// =========================
+// INITIALISATION SEQUELIZE
+// =========================
+
+// ERREUR AVANT : var sequelize
+// CORRECTION : let car valeur conditionnelle
+let sequelize;
 
 if (process.env.DATABASE_URL) {
-  var sequelize = new Sequelize(process.env.DATABASE_URL);
+  sequelize = new Sequelize(process.env.DATABASE_URL);
 } else {
-  var sequelize = new Sequelize(config.database, config.username, config.password, {
-    host: config.host,
-    dialect: config.dialect
-  });
+  sequelize = new Sequelize(
+    config.database,
+    config.username,
+    config.password,
+    {
+      host: config.host,
+      dialect: config.dialect
+    }
+  );
 }
+
+// =========================
+// TEST CONNEXION DB
+// =========================
 
 sequelize
   .authenticate()
-  .then(function (err) {
+  .then(() => {
     console.log('Connection has been established successfully.');
   })
-  .catch(function (err) {
+  .catch((err) => {
     console.log('Unable to connect to the database:', err);
-  })
+  });
+
+// =========================
+// SYNC DB
+// =========================
 
 sequelize
-  .sync( /*{ force: true }*/ ) // Force To re-initialize tables on each run
-  .then(function (err) {
+  .sync() // ⚠️ force:true désactivé pour éviter destruction tables
+  .then(() => {
     console.log('It worked!');
-  }, function (err) {
-    console.log('An error occurred while creating the table:', err);
   })
+  .catch((err) => {
+    console.log('An error occurred while creating the table:', err);
+  });
 
-var db = {};
+// =========================
+// LOAD MODELS
+// =========================
+
+// ERREUR AVANT : var db
+const db = {};
 
 fs
   .readdirSync(__dirname)
-  .filter(function (file) {
-    return (file.indexOf(".") !== 0) && (file !== "index.js");
+  .filter((file) => {
+    return file.indexOf(".") !== 0 && file !== "index.js";
   })
-  .forEach(function (file) {
-    var model = sequelize.import(path.join(__dirname, file));
+  .forEach((file) => {
+
+    // ERREUR AVANT : var model
+    const model = sequelize.import(path.join(__dirname, file));
+
     db[model.name] = model;
   });
 
-Object.keys(db).forEach(function (modelName) {
+// =========================
+// ASSOCIATIONS
+// =========================
+
+Object.keys(db).forEach((modelName) => {
   if ("associate" in db[modelName]) {
     db[modelName].associate(db);
   }
 });
+
+// =========================
+// EXPORT
+// =========================
 
 db.sequelize = sequelize;
 db.Sequelize = Sequelize;
