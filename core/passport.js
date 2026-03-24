@@ -28,7 +28,7 @@ const db = require('../models');
 const LocalStrategy = require('passport-local').Strategy;
 const bCrypt = require('bcryptjs');
 
-module.exports = function (passport) {
+module.exports = function configurePassport(passport) {
 
 	// =========================
 	// Helpers
