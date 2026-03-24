@@ -1,6 +1,6 @@
-var router = require('express').Router()
-var appHandler = require('../core/appHandler')
-var authHandler = require('../core/authHandler')
+const router = require('express').Router()
+const appHandler = require('../core/appHandler')
+const authHandler = require('../core/authHandler')
 
 module.exports = function appRoutes() {
     router.get('/', authHandler.isAuthenticated, function (req, res) {
