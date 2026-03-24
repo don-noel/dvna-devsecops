@@ -1,7 +1,7 @@
 "use strict";
 
 module.exports = function defineProductModel(sequelize, DataTypes) {
-    var Product = sequelize.define("Product", {
+    const Product = sequelize.define("Product", {
         id: {
             type: DataTypes.INTEGER,
             autoIncrement: true,
