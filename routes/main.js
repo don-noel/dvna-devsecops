@@ -2,7 +2,7 @@ var router = require('express').Router()
 var vulnDict = require('../config/vulns')
 var authHandler = require('../core/authHandler')
 
-module.exports = function (passport) {
+module.exports = function mainRoutes(passport) {
 	router.get('/', authHandler.isAuthenticated, function (req, res) {
 		res.redirect('/learn')
 	})
